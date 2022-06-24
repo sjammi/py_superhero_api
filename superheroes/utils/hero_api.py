@@ -1,5 +1,6 @@
 import logging
 import re
+from enum import Enum
 from requests import get
 from typing import List, Dict, Union
 
@@ -10,7 +11,7 @@ API_ENDPOINTS = {"all": "/all.json", "id": "/id"}
 class HeroParser:
     def parse_hero(self, raw_hero: Dict) -> Dict:
         bio = raw_hero.get(
-            "biography", {"fullName": "", "firstAppearance": "", "Publisher": ""}
+            "biography", {"fullName": "", "firstAppearance": "", "publisher": ""}
         )
         return {
             "id": raw_hero["id"],
@@ -18,11 +19,12 @@ class HeroParser:
             "alias": raw_hero.get("name"),
             "species": raw_hero.get("appearance", {"race": ""}).get("race"),
             "first_appearance": bio.get("firstAppearance"),
-            "publisher": bio.get("Publisher"),
+            "publisher": bio.get("publisher"),
         }
 
     def parse_hero_stats(self, raw_hero: Dict) -> Dict:
         return {
+            "id": raw_hero["id"],
             "intelligence": 0,
             "strength": 0,
             "speed": 0,
@@ -45,7 +47,7 @@ class HeroParser:
     def parse_raw_response(self, type: str, data: List[Dict]):
         """
         Parse incoming response from API into format expected for the requested tables.
-        :param table - Assumes one of the following ["all", "hero", "stats", "affiliation"]
+        :param type - Assumes one of the following ["all", "hero", "stats", "affiliation"]
         :param data - raw data from the API
         """
         # TODO: tried using Literal from typing, but that needs a way to do validation without mypy or similar.
@@ -69,6 +71,30 @@ class HeroParser:
                 return self.parse_hero_affiliations(raw_hero)
 
         return [parse_single_hero(h, type) for h in data]
+
+    def parse_db_response(self, hero: Dict) -> Dict:
+        """
+        Convert DB response to formatted Hero dict
+        """
+        return {
+            "info": {
+                "id": hero["id"],
+                "name": hero["name"],
+                "alias": hero["alias"],
+                "species": hero["species"],
+                "first_appearance": hero["first_appearance"],
+                "publisher": hero["publisher"],
+            },
+            "stats": {
+                "intelligence": hero["intelligence"],
+                "strength": hero["strength"],
+                "speed": hero["speed"],
+                "durability": hero["durability"],
+                "power": hero["power"],
+                "combat": hero["combat"],
+            },
+            "affiliations": hero["affiliations"]
+        }
 
 
 class APIHandler:
