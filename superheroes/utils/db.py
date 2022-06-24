@@ -10,7 +10,7 @@ from sqlalchemy import (
     Index,
     MetaData,
     func,
-    text
+    text,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
@@ -60,17 +60,21 @@ class HeroAffiliation(DeclarativeBase):
     id = Column(Integer, ForeignKey("hero.id", ondelete="CASCADE"), primary_key=True)
     affiliation = Column("affiliation", String, primary_key=True)
 
+
 hero_name_idx = Index("hero_name_idx", func.lower(Hero.alias))
-hero_affiliation_idx = Index("hero_affiliation_idx", func.lower(HeroAffiliation.affiliation))
+hero_affiliation_idx = Index(
+    "hero_affiliation_idx", func.lower(HeroAffiliation.affiliation)
+)
 
 
 table_type_map = {
     "hero": Hero,
     "hero_stats": HeroStats,
-    "hero_affiliation": HeroAffiliation
+    "hero_affiliation": HeroAffiliation,
 }
 
-class DBInterface():
+
+class DBInterface:
     def __init__(self):
         """
         Sets sqlalchemy engine instance
@@ -90,18 +94,16 @@ class DBInterface():
 
     def write(self, table, data):
         if table not in table_type_map.keys():
-            raise Exception(f"Invalid table name given for write. Please provide one of the following: {table_type_map.keys()}")
+            raise Exception(
+                f"Invalid table name given for write. Please provide one of the following: {table_type_map.keys()}"
+            )
 
         s = Session(bind=self.engine)
-        s.bulk_insert_mappings(
-            table_type_map[table],
-            data
-        )
+        s.bulk_insert_mappings(table_type_map[table], data)
         s.commit()
         logging.info(f"Wrote {len(data)} rows to {table}")
-    
+
     def read(self, query) -> List[Dict]:
-        data = []
         with self.engine.connect() as conn:
             query = text(query)
             logging.info(f"Running query: {query}")
@@ -110,11 +112,45 @@ class DBInterface():
 
     def delete(self, hero: str):
         """
-        ?TODO: if multiple heroes have the same name, all get deleted. Short of delete by ID, not sure what the best option would be.
+        ?TODO: if multiple heroes have the same name, all get deleted. Aside from delete by ID, not sure what the best option would be.
         """
         s = Session(bind=self.engine)
-        s.query(Hero).filter(func.lower(Hero.alias) == func.lower(hero)).delete(synchronize_session=False)
+        s.query(Hero).filter(func.lower(Hero.alias) == func.lower(hero)).delete(
+            synchronize_session=False
+        )
         s.commit()
-    
-    def update(self, args: Dict):
-        pass
+
+    def update(self, args: Dict) -> Dict:
+        """
+        Update a table for a provided ID and column.
+        :param args - assumes the following format { "table": "hero | hero_stats | hero_affiliation", "name" str, "column_name": "new_value" }
+        Supports multiple value changes.
+        """
+        table = None
+        name = None
+        change = {}
+        for key in args.keys():
+            if key == "table":
+                table = args[key]
+            elif key == "name":
+                name = args[key].lower()
+            else:
+                change = {key: args[key]}
+        if not table or not name or not change.keys():
+            raise Exception("Invalid arguments provided for DB update.")
+
+        Table = table_type_map[table]
+        s = Session(bind=self.engine)
+
+        id = s.query(Hero.id).filter(func.lower(Hero.alias) == name).first()[0]
+        s.query(Table).filter(Table.id == id).update(change, synchronize_session=False)
+        s.commit()
+
+        return (
+            s.query(Table).filter(Table.id == id).first()
+            if table == "hero"
+            else s.query(Hero.alias, Table)
+            .join(Table, Hero.id == Table.id)
+            .filter(Table.id == id)
+            .first()
+        )
