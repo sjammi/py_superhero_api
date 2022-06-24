@@ -60,8 +60,8 @@ class HeroAffiliation(DeclarativeBase):
     id = Column(Integer, ForeignKey("hero.id", ondelete="CASCADE"), primary_key=True)
     affiliation = Column("affiliation", String, primary_key=True)
 
-hero_name_idx = Index("hero_name_idx", Hero.alias)
-hero_affiliation_idx = Index("hero_affiliation_idx", HeroAffiliation.affiliation)
+hero_name_idx = Index("hero_name_idx", func.lower(Hero.alias))
+hero_affiliation_idx = Index("hero_affiliation_idx", func.lower(HeroAffiliation.affiliation))
 
 
 table_type_map = {
@@ -115,9 +115,6 @@ class DBInterface():
         s = Session(bind=self.engine)
         s.query(Hero).filter(func.lower(Hero.alias) == func.lower(hero)).delete(synchronize_session=False)
         s.commit()
-        # query = delete(Hero).where( func.lower(Hero.alias) == func.lower(hero))
-        # logging.warn(str(query))
-        # self.engine.execute(query)
     
     def update(self, args: Dict):
         pass
