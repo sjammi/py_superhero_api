@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from http.client import responses
 import logging
 import uvicorn
 from fastapi import FastAPI, Request
@@ -7,12 +8,17 @@ from fastapi.responses import JSONResponse
 
 from .utils.db import DBInterface
 from .utils.parser import HeroParser
+from .utils.api_models import *
 
 
 FORMAT = " %(name)s :: %(levelname)-8s :: %(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 
-app = FastAPI()
+app = FastAPI(
+    title="Sample Superhero PY API",
+    description="This API was built with FastAPI and queries an existing Postgres DB for Superhero data.",
+    version="1.0.0",
+)
 db = DBInterface()
 parser = HeroParser()
 
@@ -30,7 +36,7 @@ def health_check():
     return {"message": "Check check check"}
 
 
-@app.get("/hero/{name}")
+@app.get("/hero/{name}", response_model=FullHero)
 def get_hero(name: str):
     query = f"""
     select
@@ -45,7 +51,17 @@ def get_hero(name: str):
     return {"heroes": [parser.parse_db_response(row) for row in res]}
 
 
-@app.get("/team/{team}")
+@app.get(
+    "/team/{team}",
+    responses={
+        200: {
+            "description": "Get all members of a team.",
+            "content": {
+                "application/json": {"example": {"team_name": ["name", "name2"]}}
+            },
+        }
+    },
+)
 def get_team(team: str):
     """
     :param team - replace any spaces with %20, ex justice league -> /team/justice%20league
@@ -61,7 +77,22 @@ def get_team(team: str):
     return {team: [h["alias"] for h in res]}
 
 
-@app.get("/team/fuzzy/{name}")
+@app.get(
+    "/team/fuzzy/{name}",
+    responses={
+        200: {
+            "description": "Get all members of a team.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "team_name": ["name", "name2"],
+                        "team_name_2": ["name", "name3"],
+                    }
+                }
+            },
+        }
+    },
+)
 def get_teams_fuzzy(name: str):
     """
     Returns any teams that are similar to a given name. Ex, "avengers" -> Avengers, New Avengers, Young Avengers, ...
@@ -85,7 +116,19 @@ def get_teams_fuzzy(name: str):
     return {row["team"]: row["members"] for row in res}
 
 
-@app.get("/hero/strongest/{stat}")
+@app.get(
+    "/hero/strongest/{stat}",
+    responses={
+        200: {
+            "description": "Get N strongest heroes in a given stat.",
+            "content": {
+                "application/json": {
+                    "example": {"heroes": [{"alias": "That Guy", "some_stat": 100}]}
+                }
+            },
+        }
+    },
+)
 def get_strongest(stat: str, limit: int = 5):
     """
     Returns the 5 strongest heroes in a given stat
@@ -103,13 +146,14 @@ def get_strongest(stat: str, limit: int = 5):
     limit {limit}
     """
     res = db.read(query)
-    return {"heroes": res}
+    return {"status": "SUCCESS", "heroes": res}
 
 
-@app.post("/fix")
+@app.post("/fix", response_model=HeroUpdate)
 async def i_know_better(body: Request):
     """
-    Assumes the following request body: { "table": "hero | hero_stats | hero_affiliation", "name": str, "column_name": "new_value" }
+    Assumes the following request body: { "table": "hero | hero_stats | hero_affiliation", "name": str, "column_name": "new_value" }.
+    Multiple update columns can be given for the same table.
     """
     req = await body.json()
     res = db.update(req)

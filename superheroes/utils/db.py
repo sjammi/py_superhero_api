@@ -122,7 +122,7 @@ class DBInterface:
 
     def update(self, args: Dict) -> Dict:
         """
-        Update a table for a provided ID and column.
+        Update a table for a provided name and column.
         :param args - assumes the following format { "table": "hero | hero_stats | hero_affiliation", "name" str, "column_name": "new_value" }
         Supports multiple value changes.
         """
@@ -142,10 +142,15 @@ class DBInterface:
         Table = table_type_map[table]
         s = Session(bind=self.engine)
 
-        id = s.query(Hero.id).filter(func.lower(Hero.alias) == name).first()[0]
+        try:
+            id = s.query(Hero.id).filter(func.lower(Hero.alias) == name).first()[0]
+        except Exception as e:
+            raise Exception(f"No hero ID found for {name}.")
+
         s.query(Table).filter(Table.id == id).update(change, synchronize_session=False)
         s.commit()
 
+        # I kind of hate how this return looks, but this is what black preferrs.
         return (
             s.query(Table).filter(Table.id == id).first()
             if table == "hero"

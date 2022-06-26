@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "superheroes"
-version = "0.1.0"
+version = "1.0.0"
 description = "Basic API with Endpoints to connect to the superhero-api"
 authors = ["Sushena Jammi"]
 
@@ -17,6 +17,7 @@ psycopg2-binary = "^2.9.3"
 requests = "^2.28.0"
 fastapi = "^0.78.0"
 uvicorn = "^0.18.1"
+pydantic-sqlalchemy = "^0.0.9"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
