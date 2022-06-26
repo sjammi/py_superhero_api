@@ -16,7 +16,6 @@ Run app and refer to `http://localhost:8000/docs` / `http://localhost:8000/redoc
   - Integration testing: API connection
 - Improve get by name logic
   - Multiple heroes have the same alias (2 Batmans for example), and the delete/update logic need to be adjusted to handle that.
-- Better typing with pydantic
 
 ## Personal Notes ##
 - I prefer straight SQL when possible, but SQLAlchemy seemed like a better fit in this case since it handles DB and table creation.

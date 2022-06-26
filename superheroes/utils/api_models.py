@@ -11,9 +11,9 @@ PydanticAffiliation = sqlalchemy_to_pydantic(HeroAffiliation)
 
 
 class FullHero(BaseModel):
-    info: PydanticHero
+    hero: PydanticHero
     stats: PydanticStats
-    affiliations: List[str]
+    affiliations: List[Union[str, PydanticAffiliation]]
 
 
 class HeroStatUpdate(BaseModel):
@@ -23,3 +23,32 @@ class HeroStatUpdate(BaseModel):
 
 class HeroUpdate(BaseModel):
     response: Union[PydanticHero, HeroStatUpdate]
+
+
+### API Response models ###
+# I'd prefer nested object types in Typescript style, but that isn't supported here?
+
+
+class ApiResponseAppearance(BaseModel):
+    race: str
+    # includes other unused values
+
+
+class ApiResponseBiography(BaseModel):
+    fullName: str
+    firstAppearance: str
+    publisher: str
+    # includes other unused values
+
+
+class ApiResponseConnections(BaseModel):
+    groupAffiliation: str
+
+
+class ApiResponseHero(BaseModel):
+    id: str
+    name: str
+    powerstats: PydanticStats
+    appearance: ApiResponseAppearance
+    biography: ApiResponseBiography
+    connections: ApiResponseConnections

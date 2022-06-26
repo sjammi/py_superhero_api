@@ -1,9 +1,13 @@
+import logging
+
 import re
 from typing import List, Dict, Union
 
+from .api_models import *
+
 
 class HeroParser:
-    def parse_hero(self, raw_hero: Dict) -> Dict:
+    def parse_hero(self, raw_hero: ApiResponseHero) -> PydanticHero:
         bio = raw_hero.get(
             "biography", {"fullName": "", "firstAppearance": "", "publisher": ""}
         )
@@ -16,7 +20,7 @@ class HeroParser:
             "publisher": bio.get("publisher"),
         }
 
-    def parse_hero_stats(self, raw_hero: Dict) -> Dict:
+    def parse_hero_stats(self, raw_hero: ApiResponseHero) -> PydanticStats:
         return {
             "id": raw_hero["id"],
             "intelligence": 0,
@@ -27,7 +31,9 @@ class HeroParser:
             "combat": 0,
         } | raw_hero.get("powerstats", {})
 
-    def parse_hero_affiliations(self, raw_hero: Dict) -> List[Dict]:
+    def parse_hero_affiliations(
+        self, raw_hero: ApiResponseHero
+    ) -> List[PydanticAffiliation]:
         affiliations = raw_hero.get("connections", {"groupAffiliation": ""})[
             "groupAffiliation"
         ]
@@ -38,11 +44,14 @@ class HeroParser:
             )
         ]
 
-    def parse_raw_response(self, type: str, data: List[Dict]):
+    def parse_raw_response(
+        self, type: str, data: List[ApiResponseHero]
+    ) -> List[FullHero]:
         """
         Parse incoming response from API into format expected for the requested tables.
         :param type - Assumes one of the following ["all", "hero", "stats", "affiliation"]
         :param data - raw data from the API
+        :return List of heroes in FullHero format
         """
         # TODO: tried using Literal from typing, but that needs a way to do validation without mypy or similar.
         if type not in ["all", "hero", "stats", "affiliation"]:
@@ -50,12 +59,14 @@ class HeroParser:
                 "invalid table type given. Expects one of: [all, hero, stats, affiliation]"
             )
 
-        def parse_single_hero(raw_hero: Dict, type: str) -> Union[Dict, List[Dict]]:
+        def parse_single_hero(
+            raw_hero: ApiResponseHero, type: str
+        ) -> List[Union[FullHero, PydanticHero, PydanticStats, PydanticAffiliation]]:
             if type == "all":
                 return {
                     "hero": self.parse_hero(raw_hero),
                     "stats": self.parse_hero_stats(raw_hero),
-                    "affiliation": self.parse_hero_affiliations(raw_hero),
+                    "affiliations": self.parse_hero_affiliations(raw_hero),
                 }
             elif type == "hero":
                 return self.parse_hero(raw_hero)
@@ -66,12 +77,12 @@ class HeroParser:
 
         return [parse_single_hero(h, type) for h in data]
 
-    def parse_db_response(self, hero: Dict) -> Dict:
+    def parse_db_response(self, hero: Dict) -> FullHero:
         """
-        Convert DB response to formatted Hero dict
+        Convert DB response to formatted Hero
         """
         return {
-            "info": {
+            "hero": {
                 "id": hero["id"],
                 "name": hero["name"],
                 "alias": hero["alias"],
@@ -80,6 +91,7 @@ class HeroParser:
                 "publisher": hero["publisher"],
             },
             "stats": {
+                "id": hero["id"],
                 "intelligence": hero["intelligence"],
                 "strength": hero["strength"],
                 "speed": hero["speed"],

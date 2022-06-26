@@ -1,6 +1,8 @@
 import logging
 from requests import get
-from typing import List, Dict
+from typing import List
+
+from .api_models import ApiResponseHero
 
 API_URL = "https://akabab.github.io/superhero-api/api"
 API_ENDPOINTS = {"all": "/all.json", "id": "/id"}
@@ -14,7 +16,7 @@ class APIHandler:
     def __init__(self):
         self.url = API_URL
 
-    def query_api(self, endpoint="all", id=None) -> List[Dict]:
+    def query_api(self, endpoint="all", id=None) -> List[ApiResponseHero]:
         """
         Handles the GET request to the API.
         :param endpoint - assumes one of the endpoints specified in API_ENDPOINTS. Will throw an error otherwise.

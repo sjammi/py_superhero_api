@@ -36,7 +36,7 @@ def health_check():
     return {"message": "Check check check"}
 
 
-@app.get("/hero/{name}", response_model=FullHero)
+@app.get("/hero/{name}", response_model=List[FullHero])
 def get_hero(name: str):
     query = f"""
     select
@@ -48,7 +48,7 @@ def get_hero(name: str):
     where alias ilike '{name}';
     """
     res = db.read(query)
-    return {"heroes": [parser.parse_db_response(row) for row in res]}
+    return [parser.parse_db_response(row) for row in res]
 
 
 @app.get(
@@ -81,7 +81,7 @@ def get_team(team: str):
     "/team/fuzzy/{name}",
     responses={
         200: {
-            "description": "Get all members of a team.",
+            "description": "Get all members of any similarly named team.",
             "content": {
                 "application/json": {
                     "example": {
@@ -146,7 +146,7 @@ def get_strongest(stat: str, limit: int = 5):
     limit {limit}
     """
     res = db.read(query)
-    return {"status": "SUCCESS", "heroes": res}
+    return {"heroes": res}
 
 
 @app.post("/fix", response_model=HeroUpdate)

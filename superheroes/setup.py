@@ -25,7 +25,7 @@ def fill_db(db):
     for hero in parsed_heroes:
         heroes.append(hero["hero"])
         stats.append(hero["stats"])
-        affiliations.extend(hero["affiliation"])
+        affiliations.extend(hero["affiliations"])
 
     db.write("hero", heroes)
     db.write("hero_stats", stats)
