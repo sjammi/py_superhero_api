@@ -7,7 +7,7 @@ Run `poetry run setup` to create the local DB and fill it from the Superheroes A
 
 ## Database ##
 Models and indexes can be found in [db.py](/superheroes/utils/db.py)
-![Alt text](/screenshots/api_docs.png?raw=true)
+![Alt text](/screenshots/db_model.png?raw=true)
 
 ## Endpoints ##
 Run app and refer to `http://localhost:8000/docs` / `http://localhost:8000/redoc` for full details.
