@@ -3,9 +3,12 @@ Sample Python API with live endpoints, DB configuration, and DB fill logic.
 
 ## Setup ##
 This app assumes that postgres is installed on the system. I used Poetry to handle packages, but that's not required.
+Run `poetry run setup` to query the Superheroes API (https://akabab.github.io/superhero-api/api) and fill the local DB.
+Run `poetry run start` to start up API.
 
 ## Endpoints ##
-Run app (`poetry run start`) and refer to `http://localhost:8000/docs`
+Run app and refer to `http://localhost:8000/docs` / `http://localhost:8000/redoc` for full details.
+![Alt text](/screenshots/api_docs.png?raw=true)
 
 ## TODO ##
 - Add tests
