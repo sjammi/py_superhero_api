@@ -20,6 +20,15 @@ Run app and refer to `http://localhost:8000/docs` / `http://localhost:8000/redoc
 - Improve get by name logic
   - Multiple heroes have the same alias (2 Batmans for example), and the delete/update logic needs to be adjusted to handle that.
 
+## Production/Deployment ##
+- Docker image (3.9 slim?) + Entrypoint command should be sufficient.
+- Since that would have to be hosted somewhere, some security changes to allow queries to the deployed server's port.
+- Some kind of recurring process to pull from the API and fill DB
+  - Usually in my career this would be Airflow or something, but any batch job would do.
+  - This API doesn't have any way to grab latest, so some logic to figure out what is new and update only that.
+- In the case of a production DB with a larger dataset, some query optimization would be good.
+- Testing should be implemented first.
+
 ## Personal Notes ##
 - I prefer straight SQL when possible, but SQLAlchemy seemed like a better fit in this case since it handles DB and table creation.
 - I usually prefer not writing in OOP style for Data Engineering work (my Airflow DAGs for example usually don't have classes unless that is the team preference)
